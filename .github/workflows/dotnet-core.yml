@@ -40,7 +40,7 @@ jobs:
         OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER }}
         OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_APIKEY }}  
       run: |
-        octo pack --id="BlazorAppServer" --format="Zip" --version="${env:GITHUB_RUN_NUMBER}" --basePath="$PSScriptRoot\packagesoutput\MyApp.Web" --outFolder="packages"
+        octo pack --id="BlazorAppServer" --format="Zip" --version="${env:GITHUB_RUN_NUMBER}" --basePath="$PSScriptRoot\packagesoutput\BlazorAppServer" --outFolder="packages"
 
         octo push --package="packages\BlazorAppServer.${env:GITHUB_RUN_NUMBER}.zip" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}"
 
