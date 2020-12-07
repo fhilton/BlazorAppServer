@@ -1,25 +1,51 @@
-name: .NET Core
+name: Package Website
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    branches:
+      - master
 
+env:
+    PACKAGE_PREFIX: 2020.1.1
+    OCTOPUS_PROJECT_NAME: GitHubActionsWithBlazor
+    OCTOPUS_SPACE_NAME: Default
+    OCTOPUS_ENVIRONMENT_NAME: DevLaptop
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.301
-    - name: Install dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      
+    - name: Set version
+      id: set-version
+      run: echo "::set-env name=PACKAGE_VERSION::${env:PACKAGE_PREFIX}.${env:GITHUB_RUN_NUMBER}"
+      shell: powershell
+    
+    - name: Make package directories
+      run: New-Item "$PSScriptRoot\packagesoutput\" -ItemType Directory -Force
+      shell: powershell
+    
+    - name: Install Octopus CLI
+      run: choco install octopustools -y
+      shell: powershell
+      
+    - name: Build and Package Website
+      run: dotnet publish ./BlazorAppServer/BlazorAppServer.csproj --output "$PSScriptRoot\packagesoutput\BlazorAppServer" --configuration Release
+      shell: powershell
+
+    - name: Package and Push to Octopus
+      env:
+        OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER }}
+        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_APIKEY }}  
+      run: |
+        octo pack --id="BlazorAppServer" --format="Zip" --version="${env:PACKAGE_VERSION}" --basePath="$PSScriptRoot\packagesoutput\MyApp.Web" --outFolder="packages"
+
+        octo push --package="packages\BlazorAppServer.${env:PACKAGE_VERSION}.zip" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}"
+
+#    - name: Create and Deploy Release
+#      env:
+#        OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER }}
+#        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_APIKEY }} 
+#      run: octo create-release --project="$OCTOPUS_PROJECT_NAME" --packageVersion="${env:PACKAGE_VERSION}" --releaseNumber="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}" --deployTo="${env:OCTOPUS_ENVIRONMENT_NAME}"
