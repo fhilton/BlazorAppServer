@@ -18,10 +18,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       
-    - name: Set version
-      id: set-version
-      run: echo "PACKAGE_VERSION=${env:PACKAGE_PREFIX}.${env:GITHUB_RUN_NUMBER}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
-      shell: powershell
+#    - name: Set version
+#      id: set-version
+#      run: echo "PACKAGE_VERSION=${env:PACKAGE_PREFIX}.${env:GITHUB_RUN_NUMBER}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+#     shell: powershell
     
     - name: Make package directories
       run: New-Item "$PSScriptRoot\packagesoutput\" -ItemType Directory -Force
@@ -40,12 +40,12 @@ jobs:
         OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER }}
         OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_APIKEY }}  
       run: |
-        octo pack --id="BlazorAppServer" --format="Zip" --version="${env:PACKAGE_VERSION}" --basePath="$PSScriptRoot\packagesoutput\MyApp.Web" --outFolder="packages"
+        octo pack --id="BlazorAppServer" --format="Zip" --version="${env:GITHUB_RUN_NUMBER}" --basePath="$PSScriptRoot\packagesoutput\MyApp.Web" --outFolder="packages"
 
-        octo push --package="packages\BlazorAppServer.${env:PACKAGE_VERSION}.zip" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}"
+        octo push --package="packages\BlazorAppServer.${env:GITHUB_RUN_NUMBER}.zip" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}"
 
 #    - name: Create and Deploy Release
 #      env:
 #        OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER }}
 #        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_APIKEY }} 
-#      run: octo create-release --project="$OCTOPUS_PROJECT_NAME" --packageVersion="${env:PACKAGE_VERSION}" --releaseNumber="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}" --deployTo="${env:OCTOPUS_ENVIRONMENT_NAME}"
+#      run: octo create-release --project="$OCTOPUS_PROJECT_NAME" --packageVersion="${env:GITHUB_RUN_NUMBER}" --releaseNumber="${env:GITHUB_RUN_NUMBER}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}" --deployTo="${env:OCTOPUS_ENVIRONMENT_NAME}"
